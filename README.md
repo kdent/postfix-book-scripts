@@ -5,5 +5,5 @@ This repository contains scripts from [Postfix: The Definitive Guide](https://ww
 
 ![Postfix Book Cover](https://learning.oreilly.com/library/cover/0596002122/250w/)
 
-Most of these will be out of date now, but they are available here if needed.
+Most of these will be out of date now, but they are available here if you're interested.
 
