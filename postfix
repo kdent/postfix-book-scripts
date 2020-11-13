@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# Set the path to your own logger and postfix commands.
+#
+LOGGER="/usr/bin/logger"
+POSTFIX="/usr/sbin/postfix"
+CONF="/etc/postfix/main.cf"
+rc=0
+
+if [ ! -f $POSTFIX ] ; then
+    $LOGGER -t $0 -s -p mail.err "Unable to locate Postfix"
+    exit 1 
+fi
+if [ ! -f $CONF ] ; then
+    $LOGGER -t $0 -s -p mail.err "Unable to locate Postfix configuration"
+    exit 1
+fi
+
+case "$1" in
+    start)
+        echo -n "Starting Postfix"
+        $POSTFIX start > /dev/null 2>&1
+        rc=$?
+        echo "."
+        ;;
+
+    stop)
+        echo -n "Stopping Postfix"
+        $POSTFIX stop > /dev/null 2>&1
+        rc=$?
+        echo "."
+        ;;
+
+    restart)
+        echo -n "Restarting Postfix"
+        $POSTFIX reload > /dev/null 2>&1
+        rc=$?
+        echo "."
+        ;;
+
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        rc=1
+
+esac
+exit $rc
+
