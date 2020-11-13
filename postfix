@@ -1,4 +1,5 @@
 #!/bin/sh
+
 #
 # Set the path to your own logger and postfix commands.
 #
