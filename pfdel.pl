@@ -1,26 +1,62 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 #
-# Send contents of the real inforeply.pl to a browser.
-# This is to workaround the fact that I cannot configure
-# the web server to provide *.pl files as files rather
-# than treating them as cgi scripts.
+# pfdel - deletes message containing specified address from
+# Postfix queue. Matches either sender or recipient address.
+#
+# Usage: pfdel <email_address>
 #
 
 use strict;
 
-my $FILE = "/home2/seaglas1/public_html/postfix/pfdel.txt";
+# Change these paths if necessary.
+my $LISTQ = "/usr/sbin/postqueue -p";
+my $POSTSUPER = "/usr/sbin/postsuper";
 
-print "Content-type: text/plain\r\n\r\n";
+my $email_addr = "";
+my $qid = "";
+my $euid = $>;
 
-if (! open(FH, $FILE) ) {
-	print "Sorry, I am unable to deliver the script.\n";
-	print $!;
-	exit;
+if ( @ARGV !=  1 ) {
+	die "Usage: pfdel <email_address>\n";
+} else {
+	$email_addr = $ARGV[0];
 }
 
-while (<FH>) {
-	chomp;
-	print;
-	print "\n";
+if ( $euid != 0 ) {
+        die "You must be root to delete queue files.\n";
 }
+
+
+open(QUEUE, "$LISTQ |") ||
+  die "Can't get pipe to $LISTQ: $!\n";
+
+my $entry = <QUEUE>;	# skip single header line
+$/ = "";		# Rest of queue entries print on
+			# multiple lines.
+while ( $entry = <QUEUE> ) {
+	if ( $entry =~ / $email_addr$/m ) {
+		($qid) = split(/\s+/, $entry, 2);
+		$qid =~ s/[\*\!]//;
+		next unless ($qid);
+
+		#
+		# Execute postsuper -d with the queue id.
+		# postsuper provides feedback when it deletes
+		# messages. Let its output go through.
+		#
+		if ( system($POSTSUPER, "-d", $qid) != 0 ) {
+			# If postsuper has a problem, bail.
+			die "Error executing $POSTSUPER: error " .
+			   "code " .  ($?/256) . "\n";
+		}
+	}
+}
+close(QUEUE);
+
+if (! $qid ) {
+	die "No messages with the address <$email_addr> " .
+	  "found in queue.\n";
+}
+
+exit 0;
 
